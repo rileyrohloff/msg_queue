@@ -15,6 +15,9 @@ scheduler = BackgroundScheduler()
 # Create your views here.
 
 
+events = []
+num_of_requests = 0
+
 def start_queue_proccessing():
     msg_queue.trigger_queue()
 
@@ -55,9 +58,11 @@ def check_queue(request):
 @require_POST
 def mock_reporting_service(request, event_ID):
     data = json.loads(request.body)
-    print(data, event_ID)
-    possible_status = [200, 503, 429, 300]
-    key_status = possible_status[randint(0, len(possible_status) - 1)]
+    print(f"Numb of requests: {num_of_requests}")
+    print(f"{data['id']}, Events Recived: {len(events)}")
+    possible_status = [429, 500, 503]
+    events.append(event_ID)
+    key_status = possible_status[randint(0, len(possible_status) - 1)] if len(events) < 4 else 200
     return JsonResponse(
             {"status": "recieved"}, status=key_status, content_type="application/json"
         )
@@ -65,8 +70,9 @@ def mock_reporting_service(request, event_ID):
 @require_GET
 def health_check(request):
     bools = [True, False]
-    which_bool = bools[randint(0, 1)]
+    which_bool = bools[randint(0, len(bools) - 1)]
 
     if which_bool:
         return JsonResponse({"healthy": True}, status=200)
     return JsonResponse({"healthy": False}, status=500)
+
